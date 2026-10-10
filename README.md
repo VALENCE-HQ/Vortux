@@ -77,10 +77,9 @@ usual `~/.local/share/applications` and `~/.local/share/icons`. The in-app **Uni
 
 If something goes wrong, `vortux.log` and `logs/` in that folder are the first places to look.
 
-## How it was made
+## AI Disclosure
 
-Most of Vortux's code was written with an AI assistant (Claude, by Anthropic). I direct the project, test it on
-my own machine, and I'm responsible for what's in here. Bug reports and pull requests are welcome.
+Vortux is developed and maintained by me, with AI assistance from Claude (by Anthropic).
 
 ## License
 
