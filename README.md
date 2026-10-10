@@ -1,5 +1,8 @@
 <div align="center">
-  <img width="884" height="972" alt="VTUX" src="https://github.com/user-attachments/assets/3e9f77e9-afcb-4271-b395-f3f84253275b" />
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="https://github.com/user-attachments/assets/3e9f77e9-afcb-4271-b395-f3f84253275b">
+  <img width="221" height="243" alt="VTUX" src="https://github.com/user-attachments/assets/3e9f77e9-afcb-4271-b395-f3f84253275b" />
+</picture>
 
  ---
   # Vortux
