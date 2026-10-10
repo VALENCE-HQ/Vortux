@@ -1,0 +1,30 @@
+name: Bug report
+description: Something didn't install or launch
+body:
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened?
+      description: What did you do, what did you expect, and what happened instead?
+    validations:
+      required: true
+  - type: input
+    id: distro
+    attributes:
+      label: Distro and desktop
+      placeholder: Arch, GNOME on Wayland
+  - type: input
+    id: gpu
+    attributes:
+      label: GPU and driver
+      placeholder: AMD RX 580, Mesa RADV
+  - type: input
+    id: wine
+    attributes:
+      label: Output of `wine --version`
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs
+      description: Contents of ~/.local/share/vortux/vortux.log and logs/ if they exist
+      render: text

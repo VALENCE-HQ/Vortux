@@ -1,0 +1,35 @@
+# Builds the AppImage, .deb and .rpm when you push a tag like v0.1.0.
+# Not tested yet: expect to tweak it the first time it runs.
+name: Release
+
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+      - name: System libraries
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libwebkit2gtk-4.1-dev build-essential curl wget file \
+            libxdo-dev libssl-dev libayatana-appindicator3-dev librsvg2-dev
+      - name: three.js
+        run: ./scripts/fetch-three.sh
+      - name: Tauri CLI
+        run: cargo install tauri-cli --version "^2.0.0" --locked
+      - name: Build
+        run: cargo tauri build
+      - uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            target/release/bundle/appimage/*.AppImage
+            target/release/bundle/deb/*.deb
+            target/release/bundle/rpm/*.rpm
