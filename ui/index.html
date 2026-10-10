@@ -50,7 +50,18 @@
 
       <!-- System check -->
       <section id="s-check" class="screen" aria-labelledby="h-check" hidden>
-        <h2 id="h-check" tabindex="-1">Checking your system</h2>
+        <h2 id="h-check" tabindex="-1">What Vortux needs</h2>
+        <fieldset class="choices wine">
+          <legend class="sr">Which Wine to use</legend>
+          <label class="choice on">
+            <input type="radio" name="wine" value="bundled" checked>
+            <span><strong>Download Wine for Vortux</strong><small id="wine-bundled-note">Looking up the download&hellip;</small></span>
+          </label>
+          <label class="choice">
+            <input type="radio" name="wine" value="system">
+            <span><strong>Use the Wine on my system</strong><small id="wine-system-note"></small></span>
+          </label>
+        </fieldset>
         <ul class="checks" id="checks" aria-live="polite"></ul>
         <div class="card bad" id="problems" hidden></div>
         <div class="actions">
@@ -76,10 +87,14 @@
             <span><strong>Vortux Studio</strong><small>Create and edit games</small></span>
           </label>
         </fieldset>
-        <p class="muted">About 100 MB. Everything lives in <code>~/.local/share/vortux</code>, separate from your other Wine apps.</p>
+        <div class="card" id="downloads">
+          <strong>Vortux will download</strong>
+          <ul class="dl" id="download-list"></ul>
+          <p class="muted" id="download-total"></p>
+        </div>
         <div class="actions">
           <button class="btn" id="apps-back">Back</button>
-          <button class="btn primary big" id="install">Install</button>
+          <button class="btn primary big" id="install">Download and install</button>
         </div>
       </section>
 

@@ -19,6 +19,7 @@ pub mod prefix;
 pub mod progress;
 pub mod system;
 pub mod uninstall;
+pub mod wine;
 
 pub use app::App;
 pub use error::{Error, Result};
@@ -28,3 +29,4 @@ pub use log::log_error;
 pub use paths::Paths;
 pub use progress::{NullProgress, Progress};
 pub use uninstall::{uninstall, UninstallOptions};
+pub use wine::{WineRelease, WineSource};

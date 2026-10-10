@@ -88,8 +88,14 @@ mod tests {
 
     #[test]
     fn routes_urls_to_the_right_app() {
-        assert_eq!(App::from_url("vortex://play?game=15&token=x"), Some(App::Player));
-        assert_eq!(App::from_url("vortex-studio://open?token=x"), Some(App::Studio));
+        assert_eq!(
+            App::from_url("vortex://play?game=15&token=x"),
+            Some(App::Player)
+        );
+        assert_eq!(
+            App::from_url("vortex-studio://open?token=x"),
+            Some(App::Studio)
+        );
         assert_eq!(App::from_url("https://playvortex.io"), None);
         assert_eq!(App::from_url("vortex"), None);
     }

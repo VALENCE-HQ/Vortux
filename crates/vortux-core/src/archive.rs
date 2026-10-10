@@ -103,7 +103,9 @@ pub fn find_exe(dir: &Path, preferred: &[&str]) -> Result<PathBuf> {
     }
 
     match found.len() {
-        0 => Err(Error::Other("no .exe file was found after unpacking".into())),
+        0 => Err(Error::Other(
+            "no .exe file was found after unpacking".into(),
+        )),
         1 => Ok(found.remove(0)),
         _ => {
             let list: Vec<String> = found.iter().map(|p| p.display().to_string()).collect();

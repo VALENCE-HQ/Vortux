@@ -6,6 +6,8 @@ use std::env;
 use std::path::{Path, PathBuf};
 use std::process::{Command, Stdio};
 
+use crate::wine::WineSource;
+
 pub fn find_in_path(name: &str) -> Option<PathBuf> {
     let path = env::var_os("PATH")?;
     env::split_paths(&path)
@@ -30,10 +32,13 @@ pub enum Vulkan {
 
 #[derive(Debug, Clone)]
 pub struct SystemReport {
+    /// Version of the Wine installed on the system, if any.
     pub wine_version: Option<String>,
-    pub winetricks: bool,
     pub xdg_mime: bool,
     pub update_desktop_database: bool,
+    pub tar: bool,
+    pub xz: bool,
+    pub zstd: bool,
     pub vulkan: Vulkan,
 }
 
@@ -49,8 +54,8 @@ pub fn check() -> SystemReport {
 
     let vulkan = match find_in_path("vulkaninfo") {
         None => Vulkan::Unknown,
-        Some(p) => {
-            let ok = Command::new(p)
+        Some(tool) => {
+            let ok = Command::new(tool)
                 .arg("--summary")
                 .stdout(Stdio::null())
                 .stderr(Stdio::null())
@@ -67,19 +72,36 @@ pub fn check() -> SystemReport {
 
     SystemReport {
         wine_version,
-        winetricks: find_in_path("winetricks").is_some(),
         xdg_mime: find_in_path("xdg-mime").is_some(),
         update_desktop_database: find_in_path("update-desktop-database").is_some(),
+        tar: find_in_path("tar").is_some(),
+        xz: find_in_path("xz").is_some(),
+        zstd: find_in_path("zstd").is_some(),
         vulkan,
     }
 }
 
 impl SystemReport {
-    /// Problems that stop the install.
-    pub fn blocking_problems(&self) -> Vec<String> {
+    /// Problems that stop the install. `bundled_ready` is true when Vortux's own Wine is
+    /// already unpacked, so `tar` and `xz` aren't needed.
+    pub fn blocking_problems(&self, wine: WineSource, bundled_ready: bool) -> Vec<String> {
         let mut v = Vec::new();
-        if self.wine_version.is_none() {
-            v.push("Wine isn't installed (the `wine` command wasn't found). Install your distro's wine package.".to_string());
+        match wine {
+            WineSource::System if self.wine_version.is_none() => {
+                v.push("Wine isn't installed on your system. Pick \"Download Wine for Vortux\" or install your distro's wine package.".to_string());
+            }
+            WineSource::Bundled if !bundled_ready => {
+                if !self.tar {
+                    v.push("`tar` wasn't found. It's needed to unpack Wine.".to_string());
+                }
+                if !self.xz {
+                    v.push("`xz` wasn't found. Install your distro's xz (or xz-utils) package to unpack Wine.".to_string());
+                }
+            }
+            _ => {}
+        }
+        if !self.zstd {
+            v.push("`zstd` wasn't found. It's needed to unpack the graphics components (VKD3D-Proton).".to_string());
         }
         if !self.xdg_mime {
             v.push("`xdg-mime` wasn't found. Install your distro's xdg-utils package.".to_string());
@@ -90,12 +112,9 @@ impl SystemReport {
         v
     }
 
-    /// Things worth telling the user about that don't stop the install.
+    /// Things worth mentioning that don't stop the install.
     pub fn warnings(&self) -> Vec<String> {
         let mut v = Vec::new();
-        if !self.winetricks {
-            v.push("`winetricks` wasn't found, so DXVK and VKD3D-Proton can't be installed into the Wine prefix automatically. The apps may run slowly or not at all without them.".to_string());
-        }
         if !self.update_desktop_database {
             v.push("`update-desktop-database` wasn't found; the app menu entries may take a while to appear.".to_string());
         }

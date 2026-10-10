@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.2.0
+
+- Vortux can now download its own Wine (Kron4ek's builds) and winetricks, so a distro Wine isn't required.
+  The requirements screen lets you choose, and the app screen lists everything that will be downloaded
+  before you press the button.
+- Menu entries now point at their icons by full path.
+- Removed the retry that sent browser-style request headers; it never helped.
+
 ## 0.1.0
 
 First version.

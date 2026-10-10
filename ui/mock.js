@@ -7,8 +7,19 @@ if (!window.__TAURI__) {
   const q = new URLSearchParams(location.search);
   let cancel = false;
 
-  async function fakeInstall(ids, manual) {
+  async function fakeInstall(ids, manual, systemWine) {
     cancel = false;
+    if (!manual && systemWine === false) {
+      const wine = "wine-11.0-staging-amd64-wow64";
+      emit("vortux-step", "Downloading " + wine);
+      for (let p = 0; p <= 100; p += 5) {
+        if (cancel) return emit("vortux-done", { ok: false, cancelled: true, skipped: [] });
+        emit("vortux-download", { name: wine, done: p * 950000, total: 95000000 });
+        await sleep(50);
+      }
+      emit("vortux-step", "Unpacking Wine");
+      await sleep(800);
+    }
     for (const s of ["Checking your system", "Installing Vortux", "Creating the Wine prefix (this can take a minute)"]) {
       emit("vortux-step", s);
       await sleep(900);
@@ -34,9 +45,10 @@ if (!window.__TAURI__) {
   window.__TAURI__ = {
     core: {
       invoke: async (cmd, a = {}) => {
-        if (cmd === "system_check") return { wine: "wine-11.0 (Staging)", winetricks: true, xdg_mime: true, vulkan: "Working", problems: [], warnings: [] };
+        if (cmd === "system_check") return { wine: "wine-11.0 (Staging)", vulkan: "Working", xdg_mime: true, tar: true, xz: true, zstd: true, problems: [], warnings: [] };
+        if (cmd === "wine_info") return { system: "wine-11.0 (Staging)", bundled_ready: false, release: { name: "wine-11.0-staging-amd64-wow64", size: 95000000 }, error: null };
         if (cmd === "install_status") return { player: q.has("installed"), studio: false };
-        if (cmd === "start_install") fakeInstall(a.apps, false);
+        if (cmd === "start_install") fakeInstall(a.apps, false, a.systemWine);
         if (cmd === "install_file") fakeInstall([a.id], true);
         if (cmd === "cancel_install") cancel = true;
         if (cmd === "start_uninstall") sleep(1200).then(() => emit("vortux-done", { ok: true, cancelled: false, skipped: [], error: null }));

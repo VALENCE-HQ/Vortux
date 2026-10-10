@@ -16,6 +16,7 @@ let scene = null;
 let frameless = false;
 let steps = 0, frac = 0, total = 8;
 let current = "welcome", backTo = "welcome";
+let useSystem = false, wineInfo = null, hadInstall = false;
 
 function el(tag, cls, text) {
   const n = document.createElement(tag);
@@ -102,6 +103,7 @@ async function home() {
   let st = { player: false, studio: false };
   try { st = await invoke("install_status"); } catch (e) { /* treat as not installed */ }
   const have = Object.keys(NAMES).filter((id) => st[id]);
+  hadInstall = have.length > 0;
   $("#installed").hidden = have.length === 0;
   $("#installed-list").textContent = have.map((id) => NAMES[id]).join(", ");
   openButtons($("#installed-open"), have);
@@ -112,32 +114,85 @@ async function home() {
   show("welcome");
 }
 
-// ---------- system check ----------
+// ---------- requirements ----------
+const mb = (bytes) => Math.round(bytes / 1e6);
+
 function row(name, kind, detail) {
   const li = el("li", kind);
   li.append(el("b", "", kind === "ok" ? "\u2713" : kind === "warn" ? "!" : "\u2715"), el("span", "name", name), el("span", "muted", detail));
   return li;
 }
 
-async function check() {
+function markWineChoice() {
+  document.querySelectorAll('input[name="wine"]').forEach((r) => r.closest(".choice").classList.toggle("on", r.checked));
+}
+
+// first=true looks Wine up online and picks a sensible default; first=false only re-checks the system.
+async function check(first = true) {
   show("check");
   $("#check-next").disabled = true;
   $("#problems").hidden = true;
-  $("#checks").replaceChildren(row("Checking\u2026", "warn", ""));
+  if (first) {
+    $("#checks").replaceChildren(row("Checking\u2026", "warn", ""));
+    $("#wine-bundled-note").textContent = "Looking up the download\u2026";
+    try {
+      wineInfo = await invoke("wine_info");
+    } catch (e) {
+      wineInfo = { system: null, bundled_ready: false, release: null, error: String(e) };
+    }
+    $("#wine-system-note").textContent = wineInfo.system || "Not found on your system";
+    document.querySelector('input[value="system"]').disabled = !wineInfo.system;
+    const note = $("#wine-bundled-note");
+    if (wineInfo.bundled_ready) note.textContent = "Already downloaded";
+    else if (wineInfo.release) note.textContent = wineInfo.release.name + " \u00b7 " + mb(wineInfo.release.size) + " MB \u00b7 recommended";
+    else note.textContent = "Couldn't look up the download: " + (wineInfo.error || "are you offline?");
+    const canDownload = wineInfo.bundled_ready || !!wineInfo.release;
+    document.querySelector('input[value="' + (!canDownload && wineInfo.system ? "system" : "bundled") + '"]').checked = true;
+    markWineChoice();
+  }
+
+  useSystem = document.querySelector('input[name="wine"]:checked').value === "system";
   let i;
-  try { i = await invoke("system_check"); } catch (e) { return showError(e); }
+  try { i = await invoke("system_check", { systemWine: useSystem }); } catch (e) { return showError(e); }
   const vk = i.vulkan === "Working" ? ["ok", "working"] : i.vulkan === "Unknown" ? ["warn", "couldn't check"] : ["bad", "not working"];
-  $("#checks").replaceChildren(
-    row("Wine", i.wine ? "ok" : "bad", i.wine || "not found"),
+  const rows = [
     row("Vulkan", vk[0], vk[1]),
     row("xdg-utils", i.xdg_mime ? "ok" : "bad", i.xdg_mime ? "found" : "not found"),
-    row("winetricks", i.winetricks ? "ok" : "warn", i.winetricks ? "found" : "not found (needed for graphics components)")
-  );
+    row("zstd", i.zstd ? "ok" : "bad", i.zstd ? "found" : "not found"),
+  ];
+  const needsUnpack = !useSystem && !wineInfo.bundled_ready;
+  if (needsUnpack) rows.push(row("tar and xz", i.tar && i.xz ? "ok" : "bad", i.tar && i.xz ? "found" : "not found"));
+  $("#checks").replaceChildren(...rows);
+
+  const problems = [...i.problems];
+  if (needsUnpack && !wineInfo.release) {
+    problems.push("Vortux couldn't look up the Wine download. Check your internet connection and try again, or use the Wine on your system.");
+  }
   const box = $("#problems");
-  box.replaceChildren(...i.problems.map((p) => el("p", "", p)));
-  if (i.problems.length) box.append(el("p", "muted", "Install the missing packages with your package manager, then check again."));
-  box.hidden = i.problems.length === 0;
-  $("#check-next").disabled = i.problems.length > 0;
+  box.replaceChildren(...problems.map((p) => el("p", "", p)));
+  if (problems.length) box.append(el("p", "muted", "Install the missing packages with your package manager, then check again."));
+  box.hidden = problems.length === 0;
+  $("#check-next").disabled = problems.length > 0;
+}
+
+// Lists everything that will be downloaded, so nothing happens behind your back.
+function renderDownloads() {
+  const list = $("#download-list");
+  list.replaceChildren();
+  let total = 0;
+  const add = (text, size) => {
+    list.append(el("li", "", size ? text + " \u2014 about " + mb(size) + " MB" : text));
+    total += size || 0;
+  };
+  if (!useSystem && wineInfo && !wineInfo.bundled_ready && wineInfo.release) add("Wine (" + wineInfo.release.name + ")", wineInfo.release.size);
+  if (!hadInstall) {
+    add("Graphics components (DXVK and VKD3D-Proton)", 22e6);
+    add("winetricks, a small helper script", 0);
+  }
+  const ids = [...document.querySelectorAll(".choice input[type=checkbox]:checked")].map((b) => b.value);
+  if (ids.includes("player")) add("Vortux Player", 65e6);
+  if (ids.includes("studio")) add("Vortux Studio: you'll download this one yourself, in your browser", 0);
+  $("#download-total").textContent = (total ? "About " + mb(total) + " MB in total. " : "") + "Everything is saved in ~/.local/share/vortux.";
 }
 
 // ---------- install ----------
@@ -150,8 +205,8 @@ function paint(label) {
   if (scene) scene.setProgress(p);
 }
 
-function begin(title, count) {
-  steps = 0; frac = 0; total = 5 + 3 * count;
+function begin(title, count, extra = 0) {
+  steps = 0; frac = 0; total = 6 + 3 * count + extra;
   $("#h-install").textContent = title;
   $("#status").textContent = "Starting\u2026";
   $("#cancel").disabled = false;
@@ -218,22 +273,30 @@ listen("tauri://drag-drop", (e) => {
 // ---------- buttons ----------
 $("#go").addEventListener("click", check);
 $("#recheck").addEventListener("click", check);
-$("#check-next").addEventListener("click", () => { $("#apps-note").hidden = true; show("apps"); });
+$("#check-next").addEventListener("click", () => { $("#apps-note").hidden = true; renderDownloads(); show("apps"); });
 $("#apps-back").addEventListener("click", () => show("check"));
 
-document.querySelectorAll(".choice input").forEach((box) => {
-  box.addEventListener("change", () => box.closest(".choice").classList.toggle("on", box.checked));
+document.querySelectorAll(".choice input[type=checkbox]").forEach((box) => {
+  box.addEventListener("change", () => {
+    box.closest(".choice").classList.toggle("on", box.checked);
+    renderDownloads();
+  });
+});
+document.querySelectorAll('input[name="wine"]').forEach((radio) => {
+  radio.addEventListener("change", () => { markWineChoice(); check(false); });
 });
 
-async function startInstall(ids) {
+// explicit=false is for repairs: keep whatever Wine is already set up.
+async function startInstall(ids, explicit = true) {
   mode = "install";
   picked = ids;
-  begin("Installing", ids.length);
-  try { await invoke("start_install", { apps: ids }); } catch (e) { showError(e); }
+  const downloadsWine = explicit && !useSystem && wineInfo && !wineInfo.bundled_ready;
+  begin("Installing", ids.length, downloadsWine ? 3 : 0);
+  try { await invoke("start_install", { apps: ids, systemWine: explicit ? useSystem : null }); } catch (e) { showError(e); }
 }
 
 $("#install").addEventListener("click", () => {
-  const ids = [...document.querySelectorAll(".choice input:checked")].map((b) => b.value);
+  const ids = [...document.querySelectorAll(".choice input[type=checkbox]:checked")].map((b) => b.value);
   if (!ids.length) {
     $("#apps-note").textContent = "Pick at least one app to install.";
     $("#apps-note").hidden = false;
@@ -319,7 +382,7 @@ $("#repair").addEventListener("click", async () => {
     return;
   }
   installed = [];
-  startInstall(have);
+  startInstall(have, false);
 });
 
 applySettings();

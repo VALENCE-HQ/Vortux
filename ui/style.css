@@ -127,3 +127,5 @@ pre.card { white-space: pre-wrap; overflow: auto; max-height: 40vh; margin: 0; f
 .setting input { width: 18px; height: 18px; accent-color: var(--accent); flex: none; }
 .setting small { display: block; color: var(--muted); }
 body.calm *, body.calm *::before, body.calm *::after { animation: none !important; transition: none !important; }
+.dl { margin: 6px 0 4px; padding-left: 20px; }
+.dl li { margin: 2px 0; }

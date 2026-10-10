@@ -11,6 +11,7 @@
 | Window size, title, resizing | `src-tauri/tauri.conf.json` |
 | Commands the window can call | `src-tauri/src/main.rs` |
 | Download links, exe names, URL schemes | `crates/vortux-core/src/app.rs` |
+| Wine and winetricks downloads | `crates/vortux-core/src/wine.rs` |
 | Install steps and their order | `crates/vortux-core/src/install.rs` |
 | Where files are stored | `crates/vortux-core/src/paths.rs` |
 | Icons | `crates/vortux-core/assets/` (menu) and `src-tauri/icons/` (the app) |

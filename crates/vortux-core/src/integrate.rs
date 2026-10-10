@@ -58,7 +58,10 @@ pub fn desktop_entry(app: App, vortux_bin: &Path, icon: &Path) -> String {
 pub fn register(paths: &Paths, app: App) -> Result<()> {
     fs::create_dir_all(paths.desktop_dir())?;
     let file = paths.desktop_file(app);
-    fs::write(&file, desktop_entry(app, &paths.vortux_bin(), &paths.icon_file(app, 256)))?;
+    fs::write(
+        &file,
+        desktop_entry(app, &paths.vortux_bin(), &paths.icon_file(app, 256)),
+    )?;
 
     let file_name = file
         .file_name()
@@ -72,7 +75,9 @@ pub fn register(paths: &Paths, app: App) -> Result<()> {
         ])
         .status()?;
     if !status.success() {
-        return Err(Error::Command(format!("`xdg-mime default` exited with {status}")));
+        return Err(Error::Command(format!(
+            "`xdg-mime default` exited with {status}"
+        )));
     }
     Ok(())
 }
@@ -103,9 +108,23 @@ pub fn register_wine_protocol(paths: &Paths, app: App) -> Result<()> {
     let open_command = format!("\"{win_path}\" \"%1\"");
 
     let entries: [(&str, Vec<String>); 3] = [
-        (key.as_str(), vec!["/ve".into(), "/d".into(), format!("URL:{scheme}")]),
-        (key.as_str(), vec!["/v".into(), "URL Protocol".into(), "/d".into(), String::new()]),
-        (command_key.as_str(), vec!["/ve".into(), "/d".into(), open_command]),
+        (
+            key.as_str(),
+            vec!["/ve".into(), "/d".into(), format!("URL:{scheme}")],
+        ),
+        (
+            key.as_str(),
+            vec![
+                "/v".into(),
+                "URL Protocol".into(),
+                "/d".into(),
+                String::new(),
+            ],
+        ),
+        (
+            command_key.as_str(),
+            vec!["/ve".into(), "/d".into(), open_command],
+        ),
     ];
     for (k, extra) in entries {
         let status = wine_command(paths)
@@ -114,7 +133,9 @@ pub fn register_wine_protocol(paths: &Paths, app: App) -> Result<()> {
             .arg("/f")
             .status()?;
         if !status.success() {
-            return Err(Error::Command(format!("`wine reg add {k}` exited with {status}")));
+            return Err(Error::Command(format!(
+                "`wine reg add {k}` exited with {status}"
+            )));
         }
     }
     Ok(())

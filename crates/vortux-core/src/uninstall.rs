@@ -22,11 +22,18 @@ pub struct UninstallOptions {
 
 impl Default for UninstallOptions {
     fn default() -> Self {
-        Self { remove_apps: true, remove_prefix: true }
+        Self {
+            remove_apps: true,
+            remove_prefix: true,
+        }
     }
 }
 
-pub fn uninstall(paths: &Paths, opts: &UninstallOptions, progress: &mut dyn Progress) -> Result<()> {
+pub fn uninstall(
+    paths: &Paths,
+    opts: &UninstallOptions,
+    progress: &mut dyn Progress,
+) -> Result<()> {
     progress.step("Removing app menu entries");
     for app in App::ALL {
         remove_file(&paths.desktop_file(app))?;
@@ -46,6 +53,8 @@ pub fn uninstall(paths: &Paths, opts: &UninstallOptions, progress: &mut dyn Prog
         progress.step("Removing Vortux itself");
         remove_dir(&paths.bin_dir())?;
         remove_dir(&paths.logs_dir())?;
+        remove_dir(&paths.wine_dir())?;
+        remove_dir(&paths.tools_dir())?;
         // Only succeeds if empty; that's what we want.
         let _ = fs::remove_dir(paths.data_dir());
     }

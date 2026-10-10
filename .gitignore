@@ -1,0 +1,29 @@
+# Rust
+target/
+
+# Never commit Vortex's files
+*.exe
+*.msi
+*.zip
+
+# Local testing
+prefix/
+downloads/
+*.log
+
+# Secrets and login tokens
+.env
+*.token
+
+# Build output
+dist/
+build/
+*.AppImage
+*.deb
+*.rpm
+
+# Tauri / frontend (later phases)
+node_modules/
+
+# Tauri generated files
+src-tauri/gen/

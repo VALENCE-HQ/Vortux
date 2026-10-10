@@ -10,7 +10,11 @@ use std::time::Duration;
 
 use crate::error::{Error, Result};
 
-const USER_AGENT: &str = concat!("vortux/", env!("CARGO_PKG_VERSION"), " (unofficial installer)");
+const USER_AGENT: &str = concat!(
+    "vortux/",
+    env!("CARGO_PKG_VERSION"),
+    " (unofficial installer)"
+);
 
 /// Download `url` to `dest`. The data goes to `<dest>.part` first and is renamed when complete,
 /// so a failed download never leaves a half-written file behind.
@@ -34,7 +38,9 @@ pub fn download_to(
         }
         Err(e) => return Err(Error::Download(format!("{url}: {e}"))),
     };
-    let total = response.header("Content-Length").and_then(|v| v.parse::<u64>().ok());
+    let total = response
+        .header("Content-Length")
+        .and_then(|v| v.parse::<u64>().ok());
 
     let mut part_name: OsString = dest.as_os_str().to_owned();
     part_name.push(".part");

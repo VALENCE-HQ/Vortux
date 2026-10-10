@@ -33,8 +33,8 @@ impl Paths {
         let data_home = match env::var_os("XDG_DATA_HOME") {
             Some(v) if !v.is_empty() => PathBuf::from(v),
             _ => {
-                let home = env::var_os("HOME")
-                    .ok_or_else(|| Error::Other("HOME is not set".into()))?;
+                let home =
+                    env::var_os("HOME").ok_or_else(|| Error::Other("HOME is not set".into()))?;
                 PathBuf::from(home).join(".local/share")
             }
         };
@@ -53,6 +53,15 @@ impl Paths {
     }
     pub fn vortux_bin(&self) -> PathBuf {
         self.bin_dir().join("vortux")
+    }
+    pub fn wine_dir(&self) -> PathBuf {
+        self.data_dir().join("wine")
+    }
+    pub fn tools_dir(&self) -> PathBuf {
+        self.data_dir().join("tools")
+    }
+    pub fn winetricks_path(&self) -> PathBuf {
+        self.tools_dir().join("winetricks")
     }
     pub fn prefix_dir(&self) -> PathBuf {
         self.data_dir().join("prefix")
@@ -79,14 +88,17 @@ impl Paths {
         self.logs_dir().join(format!("{}.log", app.id()))
     }
     pub fn icon_file(&self, app: App, size: u32) -> PathBuf {
-        self.data_home
-            .join(format!("icons/hicolor/{size}x{size}/apps/vortux-{}.png", app.id()))
+        self.data_home.join(format!(
+            "icons/hicolor/{size}x{size}/apps/vortux-{}.png",
+            app.id()
+        ))
     }
     pub fn desktop_dir(&self) -> PathBuf {
         self.data_home.join("applications")
     }
     pub fn desktop_file(&self, app: App) -> PathBuf {
-        self.desktop_dir().join(format!("vortux-{}.desktop", app.id()))
+        self.desktop_dir()
+            .join(format!("vortux-{}.desktop", app.id()))
     }
 }
 

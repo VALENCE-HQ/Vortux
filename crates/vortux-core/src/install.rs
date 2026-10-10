@@ -17,25 +17,38 @@ use crate::paths::{Paths, DOWNLOAD_FILE, EXE_MARKER};
 use crate::prefix;
 use crate::progress::Progress;
 use crate::system;
+use crate::wine::{self, WineSource};
 
 pub struct InstallOptions {
     pub apps: Vec<App>,
     /// Apps to install from a zip/exe the user downloaded themselves instead of downloading.
     pub local_files: Vec<(App, PathBuf)>,
+    /// Which Wine to use. `None` picks automatically: Vortux's own if installed, else the system's.
+    pub wine: Option<WineSource>,
 }
 
 impl Default for InstallOptions {
     fn default() -> Self {
-        Self { apps: App::ALL.to_vec(), local_files: Vec::new() }
+        Self {
+            apps: App::ALL.to_vec(),
+            local_files: Vec::new(),
+            wine: None,
+        }
     }
 }
 
 /// Installs the chosen apps. Returns the apps that were skipped because the server refused the
 /// download (they can be installed later from a file the user downloads in a browser).
-pub fn install(paths: &Paths, opts: &InstallOptions, progress: &mut dyn Progress) -> Result<Vec<App>> {
+pub fn install(
+    paths: &Paths,
+    opts: &InstallOptions,
+    progress: &mut dyn Progress,
+) -> Result<Vec<App>> {
     progress.step("Checking your system");
     let report = system::check();
-    let problems = report.blocking_problems();
+    let source = opts.wine.unwrap_or_else(|| wine::auto(paths));
+    let bundled_ready = wine::bundled_binary(paths).is_some();
+    let problems = report.blocking_problems(source, bundled_ready);
     if !problems.is_empty() {
         return Err(Error::Preflight(problems));
     }
@@ -52,6 +65,13 @@ pub fn install(paths: &Paths, opts: &InstallOptions, progress: &mut dyn Progress
     if progress.is_cancelled() {
         return Err(Error::Cancelled);
     }
+    if source == WineSource::Bundled && !bundled_ready {
+        let release = wine::latest_release()?;
+        wine::install_bundled(paths, &release, progress)?;
+        if progress.is_cancelled() {
+            return Err(Error::Cancelled);
+        }
+    }
     prefix::ensure_prefix(paths, progress)?;
 
     let mut skipped = Vec::new();
@@ -59,11 +79,18 @@ pub fn install(paths: &Paths, opts: &InstallOptions, progress: &mut dyn Progress
         if progress.is_cancelled() {
             return Err(Error::Cancelled);
         }
-        let local = opts.local_files.iter().find(|(a, _)| *a == app).map(|(_, p)| p.as_path());
+        let local = opts
+            .local_files
+            .iter()
+            .find(|(a, _)| *a == app)
+            .map(|(_, p)| p.as_path());
         match install_app(paths, app, local, progress) {
             Ok(()) => {}
             Err(Error::Refused(why)) => {
-                progress.warn(&format!("{} can't be downloaded automatically ({why})", app.display_name()));
+                progress.warn(&format!(
+                    "{} can't be downloaded automatically ({why})",
+                    app.display_name()
+                ));
                 skipped.push(app);
                 continue;
             }
@@ -88,7 +115,12 @@ pub fn install(paths: &Paths, opts: &InstallOptions, progress: &mut dyn Progress
 
 /// Get one app's file (downloaded, or copied from `local`) and put its exe in place. The official
 /// downloads are zip archives (e.g. `Vortex/Vortex.exe`), but a bare exe is accepted too.
-fn install_app(paths: &Paths, app: App, local: Option<&Path>, progress: &mut dyn Progress) -> Result<()> {
+fn install_app(
+    paths: &Paths,
+    app: App,
+    local: Option<&Path>,
+    progress: &mut dyn Progress,
+) -> Result<()> {
     let app_dir = paths.app_dir(app);
     fs::create_dir_all(&app_dir)?;
     let download_path = app_dir.join(DOWNLOAD_FILE);
@@ -101,7 +133,7 @@ fn install_app(paths: &Paths, app: App, local: Option<&Path>, progress: &mut dyn
         None => {
             progress.step(&format!("Downloading {}", app.display_name()));
             download::download_to(app.download_url(), &download_path, &mut |done, total| {
-                progress.download(app, done, total);
+                progress.download(app.display_name(), done, total);
                 !progress.is_cancelled()
             })?;
         }
