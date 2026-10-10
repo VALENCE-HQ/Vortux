@@ -1,4 +1,12 @@
+<div align=center>
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="https://github.com/user-attachments/assets/3e9f77e9-afcb-4271-b395-f3f84253275b">
+  <img width="221" height="243" alt="VTUX" src="https://github.com/user-attachments/assets/3e9f77e9-afcb-4271-b395-f3f84253275b" />
+</picture>
+
+---
 # Vortux
+</div>
 
 An unofficial Linux installer for [Vortex](https://playvortex.io) and Vortex Studio.
 
