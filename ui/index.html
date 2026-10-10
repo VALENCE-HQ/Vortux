@@ -1,0 +1,157 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="dark light">
+  <title>Vortux</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body data-view="welcome">
+  <canvas id="scene" aria-hidden="true"></canvas>
+
+  <div class="shell">
+    <nav class="rail" aria-label="Install progress">
+      <img class="wordmark" src="assets/wordmark.png" alt="Vortux">
+      <ol id="rail">
+        <li><span>1</span>Welcome</li>
+        <li><span>2</span>System</li>
+        <li><span>3</span>Apps</li>
+        <li><span>4</span>Install</li>
+        <li><span>5</span>Done</li>
+      </ol>
+      <button class="link" id="open-settings">Settings</button>
+      <p class="fine">Unofficial. Not affiliated with or endorsed by Vortex.</p>
+    </nav>
+
+    <main class="panel">
+      <!-- Welcome -->
+      <section id="s-welcome" class="screen" aria-labelledby="h-welcome">
+        <div class="hero" aria-hidden="true">
+          <div class="strip"><div class="track" id="strip"></div></div>
+          <div class="mascot-wrap tilt3d"><img class="mascot float" src="assets/mascot.png" alt=""></div>
+        </div>
+        <h1 id="h-welcome" tabindex="-1">Vortex on Linux, without the hassle</h1>
+        <p class="lead">Vortux builds its own Wine environment, downloads the official apps, adds them to your app menu and makes the website's play button work.</p>
+        <div class="card" id="installed" hidden>
+          <p><strong>Already installed:</strong> <span id="installed-list"></span></p>
+          <div class="row" id="installed-open"></div>
+          <div class="row">
+            <button class="link" id="uninstall">Uninstall&hellip;</button>
+            <span id="uninstall-ask" class="row" hidden>
+              <span>Remove everything Vortux installed?</span>
+              <button class="btn danger" id="uninstall-yes">Yes, uninstall</button>
+              <button class="btn" id="uninstall-no">Cancel</button>
+            </span>
+          </div>
+        </div>
+        <div class="actions"><button class="btn primary big" id="go">Get started</button></div>
+      </section>
+
+      <!-- System check -->
+      <section id="s-check" class="screen" aria-labelledby="h-check" hidden>
+        <h2 id="h-check" tabindex="-1">Checking your system</h2>
+        <ul class="checks" id="checks" aria-live="polite"></ul>
+        <div class="card bad" id="problems" hidden></div>
+        <div class="actions">
+          <button class="btn" id="recheck">Check again</button>
+          <button class="btn primary" id="check-next" disabled>Continue</button>
+        </div>
+      </section>
+
+      <!-- Choose apps -->
+      <section id="s-apps" class="screen" aria-labelledby="h-apps" hidden>
+        <h2 id="h-apps" tabindex="-1">What would you like to install?</h2>
+        <p id="apps-note" class="note" hidden></p>
+        <fieldset class="choices">
+          <legend class="sr">Apps to install</legend>
+          <label class="choice tilt3d on">
+            <input type="checkbox" value="player" checked>
+            <img src="assets/app-icon.png" alt="">
+            <span><strong>Vortux Player</strong><small>Play Vortex games from the website</small></span>
+          </label>
+          <label class="choice tilt3d on">
+            <input type="checkbox" value="studio" checked>
+            <img src="assets/studio-icon.png" alt="">
+            <span><strong>Vortux Studio</strong><small>Create and edit games</small></span>
+          </label>
+        </fieldset>
+        <p class="muted">About 100 MB. Everything lives in <code>~/.local/share/vortux</code>, separate from your other Wine apps.</p>
+        <div class="actions">
+          <button class="btn" id="apps-back">Back</button>
+          <button class="btn primary big" id="install">Install</button>
+        </div>
+      </section>
+
+      <!-- Manual download (when the website refuses the automatic download) -->
+      <section id="s-manual" class="screen" aria-labelledby="h-manual" hidden>
+        <h2 id="h-manual" tabindex="-1">One more step for <span id="manual-name"></span></h2>
+        <p class="lead">This download only works when you're logged in to the Vortex website, so Vortux can't fetch it for you. Log in there, open the link below in your browser, then drop the downloaded file here.</p>
+        <div class="row center"><code id="manual-link"></code><button class="btn" id="manual-copy">Copy link</button></div>
+        <div class="drop" id="drop" role="status"><strong>Drop the downloaded .zip here</strong><span class="muted">or skip this for now and add it later</span></div>
+        <div class="actions">
+          <button class="btn" id="manual-skip">Skip for now</button>
+        </div>
+      </section>
+
+      <!-- Settings -->
+      <section id="s-settings" class="screen" aria-labelledby="h-settings" hidden>
+        <h2 id="h-settings" tabindex="-1">Settings</h2>
+        <fieldset class="settings">
+          <legend class="sr">Appearance</legend>
+          <label class="setting"><input type="checkbox" id="set-3d">
+            <span><strong>3D background</strong><small>Turn this off on older graphics cards or to save battery</small></span></label>
+          <label class="setting"><input type="checkbox" id="set-motion">
+            <span><strong>Animations</strong><small>Floating cubes, tilting cards and screen transitions</small></span></label>
+        </fieldset>
+        <div class="card">
+          <strong>Maintenance</strong>
+          <p class="muted">Repair downloads the installed apps again and rebuilds their menu entries. Your Wine environment is kept.</p>
+          <div class="row">
+            <button class="btn" id="repair">Repair installed apps</button>
+            <button class="btn" id="open-data">Open install folder</button>
+            <button class="btn" id="open-logs">Open logs folder</button>
+          </div>
+          <p id="settings-note" class="note" hidden></p>
+        </div>
+        <div class="actions"><button class="btn primary" id="settings-back">Back</button></div>
+      </section>
+
+      <!-- Done -->
+      <section id="s-done" class="screen" aria-labelledby="h-done" hidden>
+        <div class="mascot-wrap tilt3d"><img class="mascot float" src="assets/mascot.png" alt=""></div>
+        <h2 id="h-done" tabindex="-1">You're all set</h2>
+        <p id="done-text" class="lead"></p>
+        <div class="row" id="done-open"></div>
+        <div class="actions"><button class="btn" id="done-home">Back to start</button></div>
+      </section>
+
+      <!-- Error -->
+      <section id="s-error" class="screen" aria-labelledby="h-error" hidden>
+        <h2 id="h-error" tabindex="-1">Something went wrong</h2>
+        <pre id="error-text" class="card bad"></pre>
+        <p class="muted">Logs are in <code>~/.local/share/vortux/</code>. Include them if you report a problem.</p>
+        <div class="actions"><button class="btn primary" id="error-back">Back</button></div>
+      </section>
+    </main>
+  </div>
+
+  <!-- Install screen: frameless, full window, with the 3D tower behind it -->
+  <section id="s-install" class="stage" data-tauri-drag-region aria-labelledby="h-install" hidden>
+    <div class="stage-top">
+      <img class="mascot tilt" src="assets/mascot.png" alt="">
+      <h2 id="h-install" tabindex="-1">Installing</h2>
+      <p id="status" aria-live="polite">Starting&hellip;</p>
+    </div>
+    <div class="bar" id="bar" role="progressbar" aria-label="Install progress" aria-valuemin="0" aria-valuemax="100"><i id="fill"></i></div>
+    <footer class="stage-foot">
+      <img class="wordmark sm" src="assets/wordmark.png" alt="Vortux">
+      <span id="pct" class="muted"></span>
+      <button class="btn" id="cancel">Cancel</button>
+    </footer>
+  </section>
+
+  <script src="mock.js"></script>
+  <script src="main.js"></script>
+</body>
+</html>

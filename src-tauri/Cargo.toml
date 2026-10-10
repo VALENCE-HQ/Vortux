@@ -1,0 +1,14 @@
+[package]
+name = "vortux-app"
+description = "Vortux graphical installer (Tauri)"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+tauri = { version = "2", features = [] }
+serde = { version = "1", features = ["derive"] }
+vortux-core = { path = "../crates/vortux-core" }

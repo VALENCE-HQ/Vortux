@@ -1,0 +1,14 @@
+[workspace]
+members = ["crates/vortux-core", "crates/vortux-cli", "src-tauri"]
+# Plain `cargo build` / `cargo test` skip the Tauri app, so they work without its system libraries.
+default-members = ["crates/vortux-core", "crates/vortux-cli"]
+resolver = "2"
+
+[workspace.package]
+version = "0.1.0"
+edition = "2021"
+license = "MPL-2.0"
+
+# Faster debug builds: less debug info to generate and link.
+[profile.dev]
+debug = "line-tables-only"

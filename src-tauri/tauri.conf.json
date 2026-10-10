@@ -1,0 +1,31 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "productName": "Vortux",
+  "version": "0.1.0",
+  "identifier": "io.github.vortux.app",
+  "build": { "frontendDist": "../ui" },
+  "app": {
+    "withGlobalTauri": true,
+    "windows": [
+      {
+        "label": "main",
+        "title": "Vortux",
+        "width": 900,
+        "height": 640,
+        "minWidth": 640,
+        "minHeight": 520,
+        "resizable": true,
+        "center": true
+      }
+    ],
+    "security": { "csp": null }
+  },
+  "bundle": {
+    "active": true,
+    "targets": ["appimage", "deb", "rpm"],
+    "icon": ["icons/32x32.png", "icons/128x128.png", "icons/128x128@2x.png", "icons/icon.png"],
+    "category": "Game",
+    "shortDescription": "Unofficial Linux installer for Vortex and Vortex Studio",
+    "longDescription": "Vortux sets up Vortex and Vortex Studio on Linux through Wine: it creates a Wine environment, downloads the official apps, adds them to your app menu and handles the website's play links. Unofficial; not affiliated with Vortex."
+  }
+}

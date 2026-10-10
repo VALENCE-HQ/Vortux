@@ -1,0 +1,10 @@
+[package]
+name = "vortux-core"
+description = "Core logic for Vortux, an unofficial Linux bootstrapper for Vortex and Vortex Studio"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+
+[dependencies]
+ureq = "2"
+zip = "2"
